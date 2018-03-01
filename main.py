@@ -3,6 +3,8 @@
 #Taylor Riccetti
 #Zira Cook
 
+import nltk
+
 def main():
 	print("hi")
 
