@@ -15,6 +15,8 @@ from collections import Counter
 STOP_LIST = stopwords.words('english')
 NOUN_TAGS = ['NN', 'NNS', 'NNP', 'NNPS']
 VERB_TAGS = ['VB', 'VBD', 'VBG', 'VBN', 'VBP', 'VBZ']
+FIRST_PERSON_PRONOUNS = ['i', 'me', 'my', 'mine']
+
 
 #Gets the first 150 reviews with review text only, returned as an array
 def getPlainReviewText(file):
@@ -24,6 +26,7 @@ def getPlainReviewText(file):
         reviews.append(j['reviewText'])
     return reviews
 
+
 #Prepares data to be evaluated
 #Used to extract features in get_features()
 def trainReview(reviewText):
@@ -32,9 +35,8 @@ def trainReview(reviewText):
     return tagged
 
 
-#Helper method used in getFeatures
 #Returns a dictionary of each word and its POS tag
-#Used to check for noun and verb frequency
+#Helper method used in getFeatures to check for noun and verb frequency
 def trainReviewDict(reviewText):
 	tokens = nltk.word_tokenize(reviewText)
 	tagged = nltk.pos_tag(tokens)
@@ -43,26 +45,12 @@ def trainReviewDict(reviewText):
 		tagDict[tag[0]] = tag[1]
 	return tagDict
 
-def moreVerbsThanNouns(taggedText):
-	nounCount = 0
-	verbCount = 0
-	for word in taggedText:
-		if word[1] in NOUN_TAGS:
-			nounCount += 1
-		if word[1] in VERB_TAGS:
-			verbCount += 1
-	return nounCount < verbCount
-
 
 #Used in classifier to determine if a review was written by a bot
 def getFeatures(text):
-    #Ignores stop words (ex. the, is, of)
-    #return {word: count for word, count in Counter(trainReview(text)).items() if not word in STOP_LIST}
-    #return {word: True for word in trainReview(text) if not word in STOP_LIST}
-
     #1st person pronouns ('I', 'me')
     #More verbs than nouns
-    #Upper case, word.isupper()
+    #Upper case, word.isupper() 
     
     features = {}
     taggedWords = trainReview(text)
@@ -77,6 +65,8 @@ def getFeatures(text):
     			features[word] = True
     			if tagDict[word] in NOUN_TAGS:
     				features[word] = False
+    		elif word.lower() in FIRST_PERSON_PRONOUNS:
+    			features[word] = True
     return features
 
 
