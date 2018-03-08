@@ -2,32 +2,103 @@
 #Amanda Aldrich
 #Taylor Riccetti
 #Zira Cook
+
 import json
 import os.path as path
 import sys
-
+import random
 import nltk
+from nltk.corpus import stopwords
+from nltk import classify
+from collections import Counter
 
-def train(file):
-	# Read in the first 150 lines of each category and train.
-	i = 1
-	for i in range(150):
-		j = json.loads(file.readline())
-		text = nltk.word_tokenize(j['reviewText'])
-		tagged = nltk.pos_tag(text)
-		print(tagged)
+STOP_LIST = stopwords.words('english')
+
+#Gets the first 150 reviews with review text only, returned as an array
+def getPlainReviewText(file):
+    reviews = []
+    for i in range(150):
+        j = json.loads(file.readline())
+        reviews.append(j['reviewText'])
+    return reviews
+
+#Prepares data to be evaluated
+#Used to extract features in get_features()
+def trainReview(reviewText):
+    tokens = nltk.word_tokenize(reviewText)
+    #tagged = nltk.pos_tag(tokens)
+    return tokens
+
+
+#Used in classifier to determine if a review was written by a bot
+def getFeatures(text):
+    #Ignores stop words (ex. the, is, of)
+    #return {word: count for word, count in Counter(trainReview(text)).items() if not word in STOP_LIST}
+    blah = {word: True for word in trainReview(text) if not word in STOP_LIST}
+    print(blah)
+    return blah
+
+
+#Divides up data and tags it as 'bot' or 'human', based on manual tagging
+def getManualTrainData(appReviews, accessoryReviews):
+    botReviews = []
+    humanReviews = []
+    idx = 0
+    with open("bot_train_apps.txt", "r") as appFile:
+        for line in appFile:
+            if 'f' in line:
+                botReviews.append(appReviews[idx])
+                idx += 1
+            if 't' in line:
+                humanReviews.append(appReviews[idx])
+                idx += 1
+    idx = 0
+    with open("bot_train_accessories.txt", "r") as accessoryFile:
+        for line in accessoryFile:
+            if 'f' in line:
+                botReviews.append(accessoryReviews[idx])
+                idx += 1
+            if 't' in line:
+                humanReviews.append(accessoryReviews[idx])
+                idx += 1
+
+    return botReviews, humanReviews
+
+
+#Combines all reviews into one large list, while retaining the 'bot' and 'human' tags
+def getAllReviews(botReviews, humanReviews):
+    bots = [(review, 'bot') for review in botReviews]
+    humans = [(review, 'human') for review in humanReviews]
+    allReviews = bots + humans
+    return allReviews
+
+
+def printClassifierEval(trainSet, testSet, classifier):
+	print ('Accuracy on the training set = ' + str(classify.accuracy(classifier, trainSet)))
+	print ('Accuracy of the test set = ' + str(classify.accuracy(classifier, testSet)))
 
 
 def main():
-	dirUpTwo = path.abspath(path.join(__file__, "../.."))
-	apps = open(dirUpTwo + "//Apps_for_Android_5.json", "r")
-	accessories = open(dirUpTwo + "//Cell_Phones_and_Accessories_5.json", "r")
+    dirUpTwo = path.abspath(path.join(__file__, "../.."))
+    apps = open(dirUpTwo + "/reviews_Apps_for_Android_5.json", "r")
+    accessories = open(dirUpTwo + "/reviews_Cell_Phones_and_Accessories_5.json", "r")
 
-	train(apps)
-	train(accessories)
+    appReviews = getPlainReviewText(apps)
+    accessoryReview = getPlainReviewText(accessories)
+    botReviews, humanReviews = getManualTrainData(appReviews, accessoryReview)
 
-	apps.close()
-	accessories.close()
+    allReviews = getAllReviews(botReviews, humanReviews)
+    random.shuffle(allReviews)
+    
+    featureSet = [(getFeatures(review), tag) for (review, tag) in allReviews]
+    setlen = int(len(featureSet) / 2)
+    trainSet, testSet = featureSet[setlen:], featureSet[:setlen]
+    classifier = nltk.NaiveBayesClassifier.train(trainSet)
+
+    printClassifierEval(trainSet, testSet, classifier)
+
+    
+    apps.close()
+    accessories.close()
 
 main()
-
