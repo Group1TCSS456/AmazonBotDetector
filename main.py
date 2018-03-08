@@ -13,6 +13,7 @@ from nltk.corpus import stopwords
 from nltk import classify
 from collections import Counter
 
+TRANSLATOR = str.maketrans('', '', string.punctuation)
 STOP_LIST = stopwords.words('english')
 NOUN_TAGS = ['NN', 'NNS', 'NNP', 'NNPS']
 VERB_TAGS = ['VB', 'VBD', 'VBG', 'VBN', 'VBP', 'VBZ']
@@ -21,11 +22,10 @@ FIRST_PERSON_PRONOUNS = ['i', 'me', 'my', 'mine']
 
 #Gets the first 150 reviews with review text only, returned as an array
 def getPlainReviewText(file):
-	translator = str.maketrans('', '', string.punctuation)
 	reviews = []
 	for i in range(150):
 		j = json.loads(file.readline())
-		reviews.append(j['reviewText'].translate(translator))
+		reviews.append(j['reviewText'].translate(TRANSLATOR)) #All punctuation removed
 	return reviews
 
 
@@ -106,6 +106,7 @@ def getAllReviews(botReviews, humanReviews):
     return allReviews
 
 
+#Prints the accuracy of the classifier
 def printClassifierEval(trainSet, testSet, classifier):
 	print ('Accuracy on the training set = ' + str(classify.accuracy(classifier, trainSet)))
 	print ('Accuracy of the test set = ' + str(classify.accuracy(classifier, testSet)))
@@ -116,20 +117,22 @@ def main():
     apps = open(dirUpTwo + "/reviews_Apps_for_Android_5.json", "r")
     accessories = open(dirUpTwo + "/reviews_Cell_Phones_and_Accessories_5.json", "r")
 
+    #Parses all reviews and creates a clean list of all reviews
     appReviews = getPlainReviewText(apps)
     accessoryReview = getPlainReviewText(accessories)
     botReviews, humanReviews = getManualTrainData(appReviews, accessoryReview)
-
     allReviews = getAllReviews(botReviews, humanReviews)
     random.shuffle(allReviews)
     
+    #Create feature set and classifier to test data
     featureSet = [(getFeatures(review), tag) for (review, tag) in allReviews]
     setlen = int(len(featureSet) / 2)
     trainSet, testSet = featureSet[setlen:], featureSet[:setlen]
     classifier = nltk.NaiveBayesClassifier.train(trainSet)
-
     printClassifierEval(trainSet, testSet, classifier)
-    print(classifier.classify(getFeatures("Easy to use.")))
+
+    #Testing a string, with punctuation removed
+    print(classifier.classify(getFeatures("Easy to use.".translate(TRANSLATOR))))
     
     apps.close()
     accessories.close()
