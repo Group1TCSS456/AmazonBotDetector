@@ -7,6 +7,7 @@ import json
 import os.path as path
 import sys
 import random
+import string
 import nltk
 from nltk.corpus import stopwords
 from nltk import classify
@@ -20,11 +21,12 @@ FIRST_PERSON_PRONOUNS = ['i', 'me', 'my', 'mine']
 
 #Gets the first 150 reviews with review text only, returned as an array
 def getPlainReviewText(file):
-    reviews = []
-    for i in range(150):
-        j = json.loads(file.readline())
-        reviews.append(j['reviewText'])
-    return reviews
+	translator = str.maketrans('', '', string.punctuation)
+	reviews = []
+	for i in range(150):
+		j = json.loads(file.readline())
+		reviews.append(j['reviewText'].translate(translator))
+	return reviews
 
 
 #Prepares data to be evaluated
@@ -127,7 +129,7 @@ def main():
     classifier = nltk.NaiveBayesClassifier.train(trainSet)
 
     printClassifierEval(trainSet, testSet, classifier)
-
+    print(classifier.classify(getFeatures("Easy to use.")))
     
     apps.close()
     accessories.close()
