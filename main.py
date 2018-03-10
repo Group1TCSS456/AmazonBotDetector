@@ -8,6 +8,7 @@ import os.path as path
 import sys
 import random
 import string
+import time
 import nltk
 from nltk.corpus import stopwords
 from nltk import classify
@@ -113,6 +114,7 @@ def printClassifierEval(trainSet, testSet, classifier):
 
 
 def getTestReviews(file):
+	file.seek(0)
 	reviews = []
 	for line in file:
 		j = json.loads(line)
@@ -131,12 +133,22 @@ def getFrequencies(reviews):
 				reviewFreq[tag] = 1
 	return reviewFreq
 
+def getSingleReviewFrequency(review):
+	reviewFreq = {}
+	tagged = nltk.pos_tag(nltk.word_tokenize(review))
+	for (word, tag) in tagged:
+		if tag in reviewFreq:
+			reviewFreq[tag] = reviewFreq[tag] + 1
+		else:
+			reviewFreq[tag] = 1
+	return reviewFreq
+
 # Compares the frequencies of test data with frequencies of input review.
 def compareFrequencies(botFreq, humanFreq, inputReview):
-	inputTagFreq = getFrequencies(inputReview)
-	totalBotFreq = 0
-	reviewFreq = 0
-	totalHumanFreq = 0
+	inputTagFreq = getSingleReviewFrequency(inputReview)
+	totalBotFreq = 0.1
+	reviewFreq = 0.1
+	totalHumanFreq = 0.1
 	for tag in inputTagFreq:
 		bot = 0
 		human = 0
@@ -189,10 +201,15 @@ def main():
 
 	botTagFreq = getFrequencies(botReviews)
 	humanTagFreq = getFrequencies(humanReviews)
-	#appTestReviews = getTestReviews(apps)
-	#print("Testing apps...")  											# This is not working.
-	#frequenciesOfAll(botTagFreq, humanTagFreq, appTestReviews)
-	#print("Testing accessories...")
+
+	start = time.time()
+	appTestReviews = getTestReviews(apps)
+	print("Testing apps...")  										# This is not working.
+	frequenciesOfAll(botTagFreq, humanTagFreq, appTestReviews)
+	end = time.time()
+	elapsedTime = (end - start) / 60
+	print("Elapsed time (minutes): ", elapsedTime)
+	print("Testing accessories...")
 	#accessoriesTestReviews = getTestReviews(accessories)
 	#frequenciesOfAll(botTagFreq, humanTagFreq, accessoriesTestReviews)
 	print("Train complete.\n")
@@ -200,7 +217,7 @@ def main():
 
 	# Testing a string, with punctuation removed
 	inputReview = input("Type a review to test or hit enter to quit: ")
-	while(inputReview is not "\n"):
+	while(inputReview is not "\n" and inputReview is not "" and len(inputReview.strip()) > 0):
 		print("Calculating classifier...")
 		classResult = classifier.classify(getFeatures(inputReview.translate(TRANSLATOR)))
 
@@ -212,9 +229,9 @@ def main():
 		print("Compared to bot tag frequencies this review had " + str(freqBotResult) + "% similar frequencies")
 		print("Compared to human tag frequencies this review had " + str(freqHumanResult) + "% similar frequencies")
 		if(freqBotResult > freqHumanResult):
-			print("Given the frequency of tags, this review is believed be a bot")
+			print("Given the frequency of tags, this review is believed to be a bot")
 		else:
-			print("Given the frequency of tags, this review is believed be a Human")
+			print("Given the frequency of tags, this review is believed to be a Human")
 
 		inputReview = input("Type another review to test or hit enter to quit: ")
 
