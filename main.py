@@ -111,69 +111,61 @@ def printClassifierEval(trainSet, testSet, classifier):
 	print('Accuracy on the training set = ' + str(classify.accuracy(classifier, trainSet)))
 	print('Accuracy of the test set = ' + str(classify.accuracy(classifier, testSet)))
 
-# Compares the frequencies of test data with frequencies of input review.
-def compareFrequencies(botReviews, humanReviews, inputReview):
-	botTagFreq = {}
-	for bot in botReviews:
+
+def getTestReviews(file):
+	reviews = []
+	for line in file:
+		j = json.loads(line)
+		reviews.append(j['reviewText'].translate(TRANSLATOR))  # All punctuation removed
+	return reviews
+
+def getFrequencies(reviews):
+	reviewFreq = {}
+	for bot in reviews:
 		tokens = nltk.word_tokenize(bot)
 		tagged = nltk.pos_tag(tokens)
 		for (word, tag) in tagged:
-			if tag in botTagFreq:
-				botTagFreq[tag] = botTagFreq[tag] + 1
+			if tag in reviewFreq:
+				reviewFreq[tag] = reviewFreq[tag] + 1
 			else:
-				botTagFreq[tag] = 1
+				reviewFreq[tag] = 1
+	return reviewFreq
 
-		humanTagFreq = {}
-	for human in humanReviews:
-		tokens = nltk.word_tokenize(human)
-		tagged = nltk.pos_tag(tokens)
-		for (word, tag) in tagged:
-			if tag in humanTagFreq:
-				humanTagFreq[tag] = humanTagFreq[tag] + 1
-			else:
-				humanTagFreq[tag] = 1
-
-	inputTagFreq = {}
-	for input in inputReview:
-		tokens = nltk.word_tokenize(input)
-		tagged = nltk.pos_tag(tokens)
-		for (word, tag) in tagged:
-			if tag in inputTagFreq:
-				inputTagFreq[tag] = inputTagFreq[tag] + 1
-			else:
-				inputTagFreq[tag] = 1
-
+# Compares the frequencies of test data with frequencies of input review.
+def compareFrequencies(botFreq, humanFreq, inputReview):
+	inputTagFreq = getFrequencies(inputReview)
 	totalBotFreq = 0
-	reviewBotFreq = 0
+	reviewFreq = 0
+	totalHumanFreq = 0
 	for tag in inputTagFreq:
 		bot = 0
 		human = 0
-		if tag in botTagFreq:
-			bot += botTagFreq[tag]
-		if tag in humanTagFreq:
-			human += humanTagFreq[tag]
+		if tag in botFreq:
+			bot += botFreq[tag]
+		if tag in humanFreq:
+			human += humanFreq[tag]
 
 		totalBotFreq += bot
-		reviewBotFreq += inputTagFreq[tag]
-
-
-	totalHumanFreq = 0
-	reviewHumanFreq = 0
-	for tag in inputTagFreq:
-		bot = 0
-		human = 0
-		if tag in botTagFreq:
-			bot += botTagFreq[tag]
-		if tag in humanTagFreq:
-			human += humanTagFreq[tag]
 		totalHumanFreq += human
-		reviewHumanFreq += inputTagFreq[tag] # not sure how to do this
+		reviewFreq += inputTagFreq[tag]
 
-	return (reviewBotFreq / totalBotFreq) * 100, (reviewHumanFreq / totalHumanFreq) * 100
+	return (reviewFreq / totalBotFreq) * 100, (reviewFreq / totalHumanFreq) * 100
+
+def frequenciesOfAll(botFreq, humanFreq, reviews):
+	totalBotFreq = 0
+	totalHumanFreq = 0
+	total = 0
+	for review in reviews:
+		botResult, humanResult = compareFrequencies(botFreq, humanFreq, review)
+		total += 1
+		totalBotFreq += botResult
+		totalHumanFreq += humanResult
+	print(totalBotFreq)
+	print(totalHumanFreq)
 
 
 def main():
-	print("Please wait while we train...")
+	print("Training classifier...")
 	dirUpTwo = path.abspath(path.join(__file__, "../.."))
 	apps = open(dirUpTwo + "/reviews_Apps_for_Android_5.json", "r")
 	accessories = open(dirUpTwo + "/reviews_Cell_Phones_and_Accessories_5.json", "r")
@@ -191,7 +183,20 @@ def main():
 	trainSet, testSet = featureSet[setlen:], featureSet[:setlen]
 	classifier = nltk.NaiveBayesClassifier.train(trainSet)
 	printClassifierEval(trainSet, testSet, classifier)
+
+
+	print("Testing frequencies...")
+
+	botTagFreq = getFrequencies(botReviews)
+	humanTagFreq = getFrequencies(humanReviews)
+	#appTestReviews = getTestReviews(apps)
+	#print("Testing apps...")  											# This is not working.
+	#frequenciesOfAll(botTagFreq, humanTagFreq, appTestReviews)
+	#print("Testing accessories...")
+	#accessoriesTestReviews = getTestReviews(accessories)
+	#frequenciesOfAll(botTagFreq, humanTagFreq, accessoriesTestReviews)
 	print("Train complete.\n")
+
 
 	# Testing a string, with punctuation removed
 	inputReview = input("Type a review to test or hit enter to quit: ")
@@ -200,7 +205,7 @@ def main():
 		classResult = classifier.classify(getFeatures(inputReview.translate(TRANSLATOR)))
 
 		print("Calculating frequencies...")
-		freqBotResult, freqHumanResult = compareFrequencies(botReviews, humanReviews, inputReview)
+		freqBotResult, freqHumanResult = compareFrequencies(botTagFreq, humanTagFreq, inputReview.translate(TRANSLATOR))
 		print("Frequencies completed.\n")
 
 		print("The classifier belives this review is a " + classResult)
