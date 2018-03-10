@@ -143,7 +143,7 @@ def compareFrequencies(botReviews, humanReviews, inputReview):
 			else:
 				inputTagFreq[tag] = 1
 
-		totalBotFreq = 0
+	totalBotFreq = 0
 	reviewBotFreq = 0
 	for tag in inputTagFreq:
 		bot = 0
@@ -153,8 +153,9 @@ def compareFrequencies(botReviews, humanReviews, inputReview):
 		if tag in humanTagFreq:
 			human += humanTagFreq[tag]
 
-		totalBotFreq +=  max(bot, human)
-		reviewBotFreq += bot + inputTagFreq[tag] # not sure how to do this
+		totalBotFreq += bot
+		reviewBotFreq += inputTagFreq[tag]
+
 
 	totalHumanFreq = 0
 	reviewHumanFreq = 0
@@ -165,9 +166,8 @@ def compareFrequencies(botReviews, humanReviews, inputReview):
 			bot += botTagFreq[tag]
 		if tag in humanTagFreq:
 			human += humanTagFreq[tag]
-
-		totalHumanFreq += max(bot, human)
-		reviewHumanFreq += human + inputTagFreq[tag]  # not sure how to do this
+		totalHumanFreq += human
+		reviewHumanFreq += inputTagFreq[tag] # not sure how to do this
 
 	return (reviewBotFreq / totalBotFreq) * 100, (reviewHumanFreq / totalHumanFreq) * 100
 
@@ -198,15 +198,19 @@ def main():
 	while(inputReview is not "\n"):
 		print("Calculating classifier...")
 		classResult = classifier.classify(getFeatures(inputReview.translate(TRANSLATOR)))
-		print("Classifier completed.")
 
 		print("Calculating frequencies...")
 		freqBotResult, freqHumanResult = compareFrequencies(botReviews, humanReviews, inputReview)
 		print("Frequencies completed.\n")
 
 		print("The classifier belives this review is a " + classResult)
-		print("The frequency of tags are " + str(freqBotResult) + "% bot")
-		print("The frequency of tags are " + str(freqHumanResult) + "% human\n")
+		print("Compared to bot tag frequencies this review had " + str(freqBotResult) + "% similar frequencies")
+		print("Compared to human tag frequencies this review had " + str(freqHumanResult) + "% similar frequencies")
+		if(freqBotResult > freqHumanResult):
+			print("Given the frequency of tags, this review is believed be a bot")
+		else:
+			print("Given the frequency of tags, this review is believed be a Human")
+
 		inputReview = input("Type another review to test or hit enter to quit: ")
 
 	apps.close()
