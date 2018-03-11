@@ -21,6 +21,38 @@ VERB_TAGS = ['VB', 'VBD', 'VBG', 'VBN', 'VBP', 'VBZ']
 FIRST_PERSON_PRONOUNS = ['i', 'me', 'my', 'mine']
 
 
+# Review object, contains all variables for JSON fields
+class Review:
+    def __init__(self, asin, reviewerId, helpful, reviewText, score, title, unixReviewTime, reviewTime):
+        self.asin = asin
+        self.reviewerId = reviewerId
+        self.helpful = helpful
+        self.reviewText = reviewText
+        self.score = score
+        self.title = title
+        self.unixReviewTime = unixReviewTime
+        self.reviewTime = reviewTime
+        self.isBot = False
+
+
+# Reads in JSON from both review files and creates a dict of them based on product number (asin)
+def createReviewObjectsDict(file):
+    reviews = {}
+    file.seek(0)
+    for line in file:
+        j = json.loads(line)
+        asin = j['asin']
+        reviewObject = Review(asin, j['reviewerID'], j['helpful'], j['reviewText'], j['overall'], j['summary'], j['unixReviewTime'], j['reviewTime'])
+        if asin in reviews:
+            reviews[asin].append(reviewObject)
+        else:
+            reviews[asin] = []
+            reviews[asin].append(reviewObject)
+
+    return reviews
+
+
+
 # Gets the first 150 reviews with review text only, returned as an array
 def getPlainReviewText(file):
     reviews = []
@@ -122,6 +154,7 @@ def getTestReviews(file):
     return reviews
 
 
+# Finds POS tag frequency for a set of review texts
 def getFrequencies(reviews):
     reviewFreq = {}
     for bot in reviews:
@@ -135,6 +168,7 @@ def getFrequencies(reviews):
     return reviewFreq
 
 
+# Finds POS tag frequency for a given review text
 def getSingleReviewFrequency(review):
     reviewFreq = {}
     tagged = nltk.pos_tag(nltk.word_tokenize(review))
@@ -238,6 +272,30 @@ def verbsToNouns(review):
     return totalNouns / totalNounsAndVerbs * 100, totalVerbs / totalNounsAndVerbs * 100
 
 
+# Scans all product reviews for duplicates
+def checkForDuplicateReviewText(reviewDict):
+    reviewTexts = {}
+    textCounts = {}
+    for product in reviewDict:
+        reviews = reviewDict[product] # Gets the list of reviews associated with a product id
+
+        for review in reviews:
+            text = review.reviewText
+            if text in reviewTexts:
+                review.isBot = True
+                textCounts[text] += 1
+            else:
+                reviewTexts[text] = review
+                textCounts[text] = 1
+
+
+# Holds method calls to data crawl bot checks
+def manualDataCrawlBotCheck(appFile, accessoryFile):
+    reviewDict = createReviewObjectsDict(appFile)
+    reviewDict.update(createReviewObjectsDict(accessoryFile))
+    checkForDuplicateReviewText(reviewDict)
+
+
 def main():
     print("Training classifier...")
     dirUpTwo = path.abspath(path.join(__file__, "../.."))
@@ -262,6 +320,8 @@ def main():
 
     botTagFreq = getFrequencies(botReviews)
     humanTagFreq = getFrequencies(humanReviews)
+
+    manualDataCrawlBotCheck(apps, accessories)
 
     # start = time.time()
     # appTestReviews = getTestReviews(apps)
