@@ -228,10 +228,10 @@ def verbsToNouns(review):
     totalNounsAndVerbs = 0.01
     totalVerbs = 0.01
     for word in review:
-        if word[1] == "NN":
+        if word[1] in NOUN_TAGS:
             totalNouns += 1
             totalNounsAndVerbs += 1
-        if word[1] == "VB":
+        if word[1] in VERB_TAGS:
             totalVerbs += 1
             totalNounsAndVerbs += 1
 
@@ -241,8 +241,8 @@ def verbsToNouns(review):
 def main():
     print("Training classifier...")
     dirUpTwo = path.abspath(path.join(__file__, "../.."))
-    apps = open(dirUpTwo + "/reviews_Apps_for_Android_5.json", "r")
-    accessories = open(dirUpTwo + "/reviews_Cell_Phones_and_Accessories_5.json", "r")
+    apps = open("reviews_Apps_for_Android.json", "r")
+    accessories = open("reviews_Cell_Phones_and_Accessories.json", "r")
 
     # Parses all reviews and creates a clean list of all reviews
     appReviews = getPlainReviewText(apps)
