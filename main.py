@@ -297,7 +297,7 @@ def manualDataCrawlBotCheck(appFile, accessoryFile):
 
 
 def main():
-    print("Training classifier...")
+    print("Welcome to Group 1's Amazon Review Analyzer.\nPlease wait while we train our classifier...")
     dirUpTwo = path.abspath(path.join(__file__, "../.."))
     apps = open("reviews_Apps_for_Android.json", "r")
     accessories = open("reviews_Cell_Phones_and_Accessories.json", "r")
@@ -316,7 +316,8 @@ def main():
     classifier = nltk.NaiveBayesClassifier.train(trainSet)
     printClassifierEval(trainSet, testSet, classifier)
 
-    print("Testing frequencies...")
+    print("We are testing frequencies of our words and their tags now...\nA bot review often has a different collection of the parts of speech\n" +
+          "and grammatical makeup. For example, you may see more first person pronouns in a bot written review.")
 
     botTagFreq = getFrequencies(botReviews)
     humanTagFreq = getFrequencies(humanReviews)
@@ -336,8 +337,8 @@ def main():
     print("Train complete.\n")
 
     # Testing a string, with punctuation removed
-    inputReview = input("Type a review to test: ")
-    inputProduct = input("Type the product of the review (press enter to skip this part of the analysis): ")
+    inputReview = input("Please type in a review to test against our data: ")
+    inputProduct = input("Please type in the type of product being reviewed (press enter to skip this part of the analysis): ")
     while (inputReview is not "\n" and inputReview is not "" and (
             inputReview is not "exit" or inputProduct is not "exit")):
         inputReview = inputReview.translate(TRANSLATOR)
