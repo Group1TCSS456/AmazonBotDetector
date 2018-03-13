@@ -35,6 +35,7 @@ class Review:
         self.isBot = False
 
 
+            
 # Reads in JSON from both review files and creates a dict of them based on product number (asin)
 def createReviewObjectsDict(file):
     reviews = {}
@@ -142,8 +143,8 @@ def getAllReviews(botReviews, humanReviews):
 
 # Prints the accuracy of the classifier
 def printClassifierEval(trainSet, testSet, classifier):
-    print('Accuracy on the training set = ' + str(classify.accuracy(classifier, trainSet)))
-    print('Accuracy of the test set = ' + str(classify.accuracy(classifier, testSet)))
+    print('Accuracy on the training set = %.2f' % classify.accuracy(classifier, trainSet))
+    print('Accuracy of the test set = %.2f' % classify.accuracy(classifier, testSet))
     print('\n')
 
 
@@ -344,7 +345,7 @@ def testClassifierOnData(appTestReviews, accessoriesTestReviews, classifier):
 
 
 def main():
-    print("Training classifier...")
+    print("Welcome to Group 1's Amazon Review Analyzer.\nPlease wait while we train our classifier...")
     dirUpTwo = path.abspath(path.join(__file__, "../.."))
     apps = open("reviews_Apps_for_Android.json", "r")
     accessories = open("reviews_Cell_Phones_and_Accessories.json", "r")
@@ -371,6 +372,9 @@ def main():
 
     print("Testing frequencies...")
 
+    print("We are testing frequencies of our words and their tags now...\nA bot review often has a different grammatical makeup and "
+          + "collection of the parts of speech.\nFor example, you may see more first person pronouns in a bot written review.")
+
     botTagFreq = getFrequencies(botReviews)
     humanTagFreq = getFrequencies(humanReviews)
 
@@ -386,49 +390,53 @@ def main():
     end = time.time()
     elapsedTime = (end - start) / 60
     print("Elapsed time (minutes): ", elapsedTime)
+    manualDataCrawlBotCheck(apps, accessories)
+
+    print("Training complete.\n")
 
     # Testing a string, with punctuation removed
-    inputReview = input("Type a review to test: ")
-    inputProduct = input("Type the product of the review (press enter to skip this part of the analysis): ")
+    inputReview = input("Please enter a review to test against our data: ")
+    inputProduct = input("Please enter the type of product being reviewed (press enter to skip this part of the analysis): ")
     while (inputReview is not "\n" and inputReview is not "" and (
             inputReview is not "exit" or inputProduct is not "exit")):
         inputReview = inputReview.translate(TRANSLATOR)
         inputProduct = inputProduct.translate(TRANSLATOR)
-        print("Calculating classifier...")
+        print("Running your input review through the classifier...")
         classResult = classifier.classify(getFeatures(inputReview))
 
-        print("Calculating frequencies...")
+        print("Calculating frequencies of your review...")
         freqBotResult, freqHumanResult = compareFrequencies(botTagFreq, humanTagFreq, inputReview.translate(TRANSLATOR))
 
         if (inputProduct is not ""):
-            print("Calculating words similar to product...")
+            print("Calculating words similar to product type and listing a few on screen...")
             similarWords = perecentageSimilarToProduct(inputReview, inputProduct)
 
-        print("Calculating pronoun frequency...")
+        print("\nCalculating pronoun frequency...")
         proFreq = pronounFrequency(inputReview)
 
         print("Calculating verb to noun ratios...")
         nounFreq, verbFreq = verbsToNouns(inputReview)
 
-        print("The classifier believes this review is a " + classResult + "\n")
-        print("Compared to bot tag frequencies this review had " + str(freqBotResult) + "% similar frequencies")
-        print("Compared to human tag frequencies this review had " + str(freqHumanResult) + "% similar frequencies")
+
+        print("\nThe classifier believes your review is a " + classResult + "\n")
+        print("Compared to bot tag frequencies this review had %.2f %% similar frequencies" % freqBotResult)
+        print("Compared to human tag frequencies this review had %.2f %% similar frequencies" % freqHumanResult)
         if (freqBotResult > freqHumanResult):
-            print("Given the frequency of tags, this review is believed to be a bot.\n")
+            print("Given the frequency of tags, this review is believed to be a bot written review.\n")
         else:
-            print("Given the frequency of tags, this review is believed to be a Human.\n")
+            print("Given the frequency of tags, this review is believed to be a human written review.\n")
 
         if (inputProduct is not ""):
-            print(str(similarWords) + "% of words in the review are similar to the product.\n")
+            print("%.2f %% of words in the review are similar to the product type.\n" % similarWords)
 
-        print(str(proFreq) + "% a higher percent of pronouns appear more frequently in a fake review.\n")
+        print("%.2f %% pronouns in our review.\nA higher percentage of pronouns in a review can indicate a bot wrote the review\n" % proFreq)
+        
+        print("%.2f %% nouns in our review.\nA higher percentage of nouns in a review as compared to verbs can indicate a human wrote the review.\n" % nounFreq)
 
-        print(str(nounFreq) + "% a higher percentage of nouns shows a more genuine review.\n")
+        print("%.2f %% verbs in our review\nA higher percentage of verbs in a review as compared to nouns can indicate a bot wrote the review.\n" % verbFreq)
 
-        print(str(verbFreq) + "% a higher percentage of verbs shows a less substance in a review.\n")
-
-        inputReview = input("Type a review to test: ")
-        inputProduct = input("Type the product of the review (press enter to skip this part of the analysis): ")
+        inputReview = input("Please enter a review to test: ")
+        inputProduct = input("Please enter the product of the review (press enter to skip this part of the analysis): ")
     apps.close()
     accessories.close()
 
