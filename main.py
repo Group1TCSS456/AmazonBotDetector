@@ -35,6 +35,7 @@ class Review:
         self.isBot = False
 
 
+            
 # Reads in JSON from both review files and creates a dict of them based on product number (asin)
 def createReviewObjectsDict(file):
     reviews = {}
@@ -214,7 +215,7 @@ def frequenciesOfAll(botFreq, humanFreq, reviews):
     print(totalHumanFreq / total)
 
 
-# Calculates how similar wors in the review are to the product.
+# Calculates how similar words in the review are to the product.
 # This can gauge how detailed the review is.
 def perecentageSimilarToProduct(review, product):
     count = 0
