@@ -88,6 +88,7 @@ def getFeatures(text):
     # Upper case, word.isupper()
 
     features = {}
+    text = text.translate(TRANSLATOR)
     taggedWords = trainReview(text)
     tagDict = trainReviewDict(text)
 
@@ -146,6 +147,7 @@ def printClassifierEval(trainSet, testSet, classifier):
 
 
 def getTestReviews(file):
+    print("Retrieving all reviews from ", file.name)
     file.seek(0)
     reviews = []
     for line in file:
@@ -241,14 +243,13 @@ def perecentageSimilarToProduct(review, product):
 # That's probably why words like 'I' and 'me' appear more often in fake reviews.
 def pronounFrequency(review):
     review = nltk.pos_tag(nltk.word_tokenize(review))
-    # I me my
     totalPronouns = 0.01
     firstPersonPronouns = 0.01
     for word in review:
         if word[1] == "PRP":
             totalPronouns += 1
             lword = word[0].lower()
-            if (lword == "me" or lword == "i" or lword == "my"):
+            if lword in FIRST_PERSON_PRONOUNS:
                 firstPersonPronouns += 1
     return firstPersonPronouns / totalPronouns * 100
 
@@ -296,6 +297,41 @@ def manualDataCrawlBotCheck(appFile, accessoryFile):
     checkForDuplicateReviewText(reviewDict)
 
 
+# Classifies all given reviews
+# Returns what percentage is bot and what percentage is human
+def classifiyData(classifier, reviews):
+    print("Classifying review data")
+    totalReviews = 0
+    botReviews = 0
+    humanReviews = 0
+    for inputReview in reviews:
+        totalReviews += 1
+        progress(totalReviews, 10000)
+        result = classifier.classify(getFeatures(inputReview))
+        if result is "bot":
+            botReviews += 1
+        else:
+            humanReviews += 1
+
+    print("Total: ", totalReviews)
+    print("Bot: ", botReviews)
+    print("Human: ", humanReviews)
+
+    return (botReviews / totalReviews)*100, (humanReviews / totalReviews)*100
+
+
+# A progress bar for the bulk data classifier
+def progress(count, total, suffix=''):
+    bar_len = 60
+    filled_len = int(round(bar_len * count / float(total)))
+
+    percents = round(100.0 * count / float(total), 1)
+    bar = '=' * filled_len + '-' * (bar_len - filled_len)
+
+    sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', suffix))
+    sys.stdout.flush()
+
+
 def main():
     print("Training classifier...")
     dirUpTwo = path.abspath(path.join(__file__, "../.."))
@@ -314,7 +350,18 @@ def main():
     setlen = int(len(featureSet) / 2)
     trainSet, testSet = featureSet[setlen:], featureSet[:setlen]
     classifier = nltk.NaiveBayesClassifier.train(trainSet)
+
     printClassifierEval(trainSet, testSet, classifier)
+
+    appTestReviews = getTestReviews(apps)
+    appBotPercent, appHumanPercent = classifiyData(classifier, appTestReviews)
+    print(appBotPercent, "% of app reviews are bots")
+    print(appHumanPercent, "% of app reviews are human")
+
+    accessoriesTestReviews = getTestReviews(accessories)
+    accessoryBotPercent, accessoryHumanPercent = classifiyData(classifier, accessoryTestReviews)
+    print(accessoryBotPercent, "% of accessory reviews are bots")
+    print(accessoryHumanPercent, "% of accessory reviews are human")
 
     print("Testing frequencies...")
 
