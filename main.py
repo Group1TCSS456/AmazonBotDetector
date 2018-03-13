@@ -209,14 +209,13 @@ def frequenciesOfAll(botFreq, humanFreq, reviews):
     total = 0
     for review in reviews:
         botResult, humanResult = compareFrequencies(botFreq, humanFreq, review)
-        total += 1
+        total += botResult + humanResult
         totalBotFreq += botResult
         totalHumanFreq += humanResult
-    print(totalBotFreq / total)
-    print(totalHumanFreq / total)
+    return (totalBotFreq / total) * 100, (totalHumanFreq / total) * 100
 
 
-# Calculates how similar wors in the review are to the product.
+# Calculates how similar words in the review are to the product.
 # This can gauge how detailed the review is.
 def perecentageSimilarToProduct(review, product):
     count = 0
@@ -370,16 +369,18 @@ def main():
 
     manualDataCrawlBotCheck(apps, accessories)
 
-    # start = time.time()
-    # appTestReviews = getTestReviews(apps)
-    # print("Testing apps...")  										# This is not working.
-    # frequenciesOfAll(botTagFreq, humanTagFreq, appTestReviews)
-    # end = time.time()
-    # elapsedTime = (end - start) / 60
-    # print("Elapsed time (minutes): ", elapsedTime)
-    # print("Testing accessories...")
-    # accessoriesTestReviews = getTestReviews(accessories)
-    # frequenciesOfAll(botTagFreq, humanTagFreq, accessoriesTestReviews)
+    start = time.time()
+    appTestReviews = getTestReviews(apps)
+    print("Testing apps...")  										# This is not working.
+    botAverageApps, humanAverageApps = frequenciesOfAll(botTagFreq, humanTagFreq, appTestReviews)
+    print(str(botAverageApps) + "% of apps reviews are bots, and " + str(humanAverageApps) + "% are human.")
+    end = time.time()
+    elapsedTime = (end - start) / 60
+    #print("Elapsed time (minutes): ", elapsedTime)
+    print("Testing accessories...")
+    accessoriesTestReviews = getTestReviews(accessories)
+    botAverageAccessories, humanAverageAccessories = frequenciesOfAll(botTagFreq, humanTagFreq, accessoriesTestReviews)
+    print(str(botAverageAccessories) + "% of accessory reviews are bots, and " + str(humanAverageAccessories) + "% are human.")
     print("Train complete.\n")
 
     # Testing a string, with punctuation removed
