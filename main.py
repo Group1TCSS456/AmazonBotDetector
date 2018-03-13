@@ -410,7 +410,7 @@ def main():
         print("Calculating verb to noun ratios...")
         nounFreq, verbFreq = verbsToNouns(inputReview)
 
-        print("The classifier belives this review is a " + classResult + "\n")
+        print("The classifier believes this review is a " + classResult + "\n")
         print("Compared to bot tag frequencies this review had " + str(freqBotResult) + "% similar frequencies")
         print("Compared to human tag frequencies this review had " + str(freqHumanResult) + "% similar frequencies")
         if (freqBotResult > freqHumanResult):
