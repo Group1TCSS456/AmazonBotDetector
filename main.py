@@ -144,8 +144,11 @@ def getAllReviews(botReviews, humanReviews):
 def printClassifierEval(trainSet, testSet, classifier):
     print('Accuracy on the training set = ' + str(classify.accuracy(classifier, trainSet)))
     print('Accuracy of the test set = ' + str(classify.accuracy(classifier, testSet)))
+    print('\n')
 
 
+# Reads all reviews from a given file
+# Returns all review text as a list
 def getTestReviews(file):
     print("Retrieving all reviews from ", file.name)
     file.seek(0)
@@ -207,7 +210,10 @@ def frequenciesOfAll(botFreq, humanFreq, reviews):
     totalBotFreq = 0
     totalHumanFreq = 0
     total = 0
+    progressCount = 0
     for review in reviews:
+        progressCount += 1
+        progress(progressCount, 10000)
         botResult, humanResult = compareFrequencies(botFreq, humanFreq, review)
         total += botResult + humanResult
         totalBotFreq += botResult
@@ -299,7 +305,7 @@ def manualDataCrawlBotCheck(appFile, accessoryFile):
 # Classifies all given reviews
 # Returns what percentage is bot and what percentage is human
 def classifiyData(classifier, reviews):
-    print("Classifying review data")
+    print("\nClassifying review data")
     totalReviews = 0
     botReviews = 0
     humanReviews = 0
@@ -311,10 +317,6 @@ def classifiyData(classifier, reviews):
             botReviews += 1
         else:
             humanReviews += 1
-
-    print("Total: ", totalReviews)
-    print("Bot: ", botReviews)
-    print("Human: ", humanReviews)
 
     return (botReviews / totalReviews)*100, (humanReviews / totalReviews)*100
 
@@ -329,6 +331,16 @@ def progress(count, total, suffix=''):
 
     sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', suffix))
     sys.stdout.flush()
+
+
+# Tests all data for bots with the classifier
+def testClassifierOnData(appTestReviews, accessoriesTestReviews, classifier):
+    appBotPercent, appHumanPercent = classifiyData(classifier, appTestReviews)
+    print("\n", appBotPercent,"% of app reviews are bots, and ", appHumanPercent,"% of app reviews are human")
+
+    accessoryBotPercent, accessoryHumanPercent = classifiyData(classifier, accessoriesTestReviews)
+    print("\n", accessoryBotPercent,"% of accessory reviews are bots and", accessoryHumanPercent,"% of accessory reviews are human")
+
 
 
 def main():
@@ -349,39 +361,31 @@ def main():
     setlen = int(len(featureSet) / 2)
     trainSet, testSet = featureSet[setlen:], featureSet[:setlen]
     classifier = nltk.NaiveBayesClassifier.train(trainSet)
-
     printClassifierEval(trainSet, testSet, classifier)
 
     appTestReviews = getTestReviews(apps)
-    appBotPercent, appHumanPercent = classifiyData(classifier, appTestReviews)
-    print(appBotPercent, "% of app reviews are bots")
-    print(appHumanPercent, "% of app reviews are human")
-
     accessoriesTestReviews = getTestReviews(accessories)
-    accessoryBotPercent, accessoryHumanPercent = classifiyData(classifier, accessoryTestReviews)
-    print(accessoryBotPercent, "% of accessory reviews are bots")
-    print(accessoryHumanPercent, "% of accessory reviews are human")
+
+    print("\nTesting classifier...")
+    testClassifierOnData(appTestReviews, accessoriesTestReviews, classifier)
 
     print("Testing frequencies...")
 
     botTagFreq = getFrequencies(botReviews)
     humanTagFreq = getFrequencies(humanReviews)
 
-    manualDataCrawlBotCheck(apps, accessories)
-
     start = time.time()
-    appTestReviews = getTestReviews(apps)
-    print("Testing apps...")  										# This is not working.
+    print("\nTesting apps...")
     botAverageApps, humanAverageApps = frequenciesOfAll(botTagFreq, humanTagFreq, appTestReviews)
     print(str(botAverageApps) + "% of apps reviews are bots, and " + str(humanAverageApps) + "% are human.")
-    end = time.time()
-    elapsedTime = (end - start) / 60
-    #print("Elapsed time (minutes): ", elapsedTime)
-    print("Testing accessories...")
-    accessoriesTestReviews = getTestReviews(accessories)
+    
+    print("\nTesting accessories...")
     botAverageAccessories, humanAverageAccessories = frequenciesOfAll(botTagFreq, humanTagFreq, accessoriesTestReviews)
     print(str(botAverageAccessories) + "% of accessory reviews are bots, and " + str(humanAverageAccessories) + "% are human.")
     print("Train complete.\n")
+    end = time.time()
+    elapsedTime = (end - start) / 60
+    print("Elapsed time (minutes): ", elapsedTime)
 
     # Testing a string, with punctuation removed
     inputReview = input("Type a review to test: ")
