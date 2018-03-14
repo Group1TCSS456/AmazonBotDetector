@@ -193,8 +193,8 @@ def compareFrequencies(botFreq, humanFreq, inputReview):
     reviewFreq = 0.01
     totalHumanFreq = 0.01
     for tag in inputTagFreq:
-        bot = 0
-        human = 0
+        bot = 0.01
+        human = 0.01
         if tag in botFreq:
             bot += botFreq[tag]
         if tag in humanFreq:
