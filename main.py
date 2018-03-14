@@ -381,11 +381,12 @@ def main():
     start = time.time()
     print("\nTesting apps...")
     botAverageApps, humanAverageApps = frequenciesOfAll(botTagFreq, humanTagFreq, appTestReviews)
-    print(str(botAverageApps) + "% of apps reviews are bots, and " + str(humanAverageApps) + "% are human.")
+    print("\n", botAverageApps,"% of app reviews are bots, and", humanAverageApps,"% are human")
     
     print("\nTesting accessories...")
     botAverageAccessories, humanAverageAccessories = frequenciesOfAll(botTagFreq, humanTagFreq, accessoriesTestReviews)
-    print(str(botAverageAccessories) + "% of accessory reviews are bots, and " + str(humanAverageAccessories) + "% are human.")
+    print("\n", botAverageAccessories,"% of accessory reviews are bots, and", humanAverageAccessories,"% are human")
+
     print("Train complete.\n")
     end = time.time()
     elapsedTime = (end - start) / 60
