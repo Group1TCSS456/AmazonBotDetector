@@ -344,6 +344,27 @@ def testClassifierOnData(appTestReviews, accessoriesTestReviews, classifier):
 
 
 
+# Normalizes the frequencies to prevent skewing of input review comparison
+def normalizeFrequencies(botFreq, humanFreq):
+    print("Normalizing bot and human POS tag frequencies...")
+
+    botTotal = 0
+    for tag in botFreq:
+        botTotal += botFreq[tag]
+
+    humanTotal = 0
+    for tag in humanFreq:
+        humanTotal += humanFreq[tag]
+
+    ratio = humanTotal / botTotal
+
+    for tag in botFreq:
+        botFreq[tag] *= ratio
+
+    return botFreq, humanFreq
+    
+
+
 def main():
     print("Welcome to Group 1's Amazon Review Analyzer.\nPlease wait while we train our classifier...")
     dirUpTwo = path.abspath(path.join(__file__, "../.."))
@@ -368,7 +389,8 @@ def main():
     accessoriesTestReviews = getTestReviews(accessories)
 
     print("\nTesting classifier...")
-    testClassifierOnData(appTestReviews, accessoriesTestReviews, classifier)
+    #UNCOMMENT OAINVOENVOIENVOIENOIERNVOIENVOIERNVINRVOIERNVONRVIENRVOINROVINEOIVNEROIVNEROIVNEOIVNEROIVNEROINVEORIVN
+    #testClassifierOnData(appTestReviews, accessoriesTestReviews, classifier)
 
     print("Testing frequencies...")
 
@@ -377,6 +399,7 @@ def main():
 
     botTagFreq = getFrequencies(botReviews)
     humanTagFreq = getFrequencies(humanReviews)
+    botTagFreq, humanTagFreq = normalizeFrequencies(botTagFreq, humanTagFreq)
 
     start = time.time()
     print("\nTesting apps...")
